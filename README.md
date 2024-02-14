@@ -37,7 +37,7 @@
 Был дописан метод delete, который должен искать в списке нужного юзера и просто удалять его из списка. Список сохранять обратно.
 Я посчитал, что возвращать Boolean переменную не имеет большого смысла, поэтому переделал метод на void.
 
-public void delete(Long userId) {
+    public void delete(Long userId) {
         List<User> users = findAll();
         User deleteUser = findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         users.remove(deleteUser);
@@ -54,11 +54,11 @@ public void delete(Long userId) {
         return new User(firstName, lastName, phone);
     }
 ### - остальное было перенесено в отдельный класс UserDialogue:
-public class UserDialogue {
-    private final UserController userController;
-    public UserDialogue(UserController userController) {
-        this.userController = userController;
-    }
+    public class UserDialogue {
+        private final UserController userController;
+        public UserDialogue(UserController userController) {
+            this.userController = userController;
+        }
     public void run(){
         Commands com;
         while (true) {
@@ -108,15 +108,15 @@ public class UserDialogue {
                     String userIdToDelete = prompt("Enter user id: ");
                     userController.deleteUser(userIdToDelete);
                     break;
+                }
             }
         }
+        public static String prompt(String message) {
+            Scanner in = new Scanner(System.in);
+            System.out.print(message);
+            return in.nextLine().toUpperCase(Locale.ROOT).replaceAll(" ", "").trim();
+        }
     }
-    public static String prompt(String message) {
-        Scanner in = new Scanner(System.in);
-        System.out.print(message);
-        return in.nextLine().toUpperCase(Locale.ROOT).replaceAll(" ", "").trim();
-    }
-}
 
 ## 3.
 Логика dao перенес в класс UserRepository:
@@ -157,12 +157,12 @@ public class UserDialogue {
 
 Пришлось подставлять имя файла в Main из DBConnector:
 
-import static notebook.util.DBConnector.DB_PATH;
-...
-        GBRepository repository = new UserRepository(DB_PATH);
-        UserController controller = new UserController(repository);
-        UserDialogue phoneBook = new UserDialogue(controller);
-...
+    import static notebook.util.DBConnector.DB_PATH;
+    ...
+            GBRepository repository = new UserRepository(DB_PATH);
+            UserController controller = new UserController(repository);
+            UserDialogue phoneBook = new UserDialogue(controller);
+    ...
 
 ## 4..6
 Для задач рефакторинга, оптимизации и улучшения было сделано следующее:
@@ -192,27 +192,27 @@ import static notebook.util.DBConnector.DB_PATH;
 
 Также вынесен код из Main в класс Preparation:
 
-public class Preparation {
-    private Preparation() {
-        createDB();
-        GBRepository repository = new UserRepository(DB_PATH);
-        UserController controller = new UserController(repository);
-        UserDialogue phoneBook = new UserDialogue(controller);
-        phoneBook.run();
+    public class Preparation {
+        private Preparation() {
+            createDB();
+            GBRepository repository = new UserRepository(DB_PATH);
+            UserController controller = new UserController(repository);
+            UserDialogue phoneBook = new UserDialogue(controller);
+            phoneBook.run();
+        }
+        public static void run(){
+            new Preparation();
+        }
     }
-    public static void run(){
-        new Preparation();
-    }
-}
 
 В Main'е теперь осталось только:
 
-package notebook;
-import static notebook.Preparation.run;
-public class Main {
-    public static void main(String[] args) {
-        run();
+    package notebook;
+    import static notebook.Preparation.run;
+    public class Main {
+        public static void main(String[] args) {
+            run();
+        }
     }
-}
 
-Вдальнейшем планирую организовать отдельную проверку введенных значений для полей, их более приятный на вид вывод на экран, 
+Вдальнейшем планирую организовать отдельную проверку введенных значений для полей, их более приятный на вид вывод на экран, другие методы, возможно, для работы с несколькими контактами одновременно.
